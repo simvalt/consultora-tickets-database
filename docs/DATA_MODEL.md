@@ -16,7 +16,7 @@ tickets 1──* ticket_events  (actor_id → users)
 | `roles` | Dinámicos. Nombre único (insensible a mayúsculas). `is_active` para desactivar sin perder referencias. |
 | `role_permissions` | PK `(role_id, module)`. `module` ∈ tickets, users, roles, clients, dashboard. `level` 0 nada, 1 leer, 2 insertar, 3 editar, 4 eliminar (acumulativo). |
 | `user_permissions` | Overrides por usuario: PK `(user_id, module)`, `level` 0..4. El nivel efectivo de un módulo es el del usuario si existe fila; si no, el del rol. |
-| `users` | Email único insensible a mayúsculas, `password_hash` argon2id, un rol por usuario, `is_active`. Nunca se borran. |
+| `users` | Email único insensible a mayúsculas, `password_hash` argon2id, `password_changed_at` (se rechazan tokens emitidos antes), un rol por usuario, `is_active`. Nunca se borran. |
 | `refresh_tokens` | Solo se guarda el SHA-256 del token opaco; `revoked_at` para logout/rotación. |
 | `clients` | Nombre único; se desactivan (no se borran). |
 | `ticket_categories` | Catálogo fijo sembrado por el seed base (6 categorías). |
@@ -35,7 +35,8 @@ tickets 1──* ticket_events  (actor_id → users)
 ## Índices
 
 - Parciales (`WHERE deleted_at IS NULL`) sobre `status`, `priority`, `client_id`, `category_id`, `assignee_id`, `created_at`; `due_at` parcial para vencidos.
-- GIN trigram (`pg_trgm`) en `title` y `description` para búsqueda `ILIKE`; el folio usa el índice único.
+- GIN trigram (`pg_trgm`) en `folio`, `title` y `description` para búsqueda `ILIKE '%texto%'`.
+- `(created_at DESC NULLS LAST, id)` parcial para la primera página del listado (orden por defecto).
 - `ticket_events (ticket_id, created_at)` para el historial y un índice parcial de eventos de cierre para la serie "cerrados por día".
 
 ## "Administrador"

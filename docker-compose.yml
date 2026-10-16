@@ -1,7 +1,7 @@
 # PostgreSQL local + job de migraciones. Uso: docker compose up -d db && docker compose run --rm migrate
 services:
   db:
-    image: postgres:16.4
+    image: postgres:16.15-bookworm
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-tickets}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?define POSTGRES_PASSWORD en .env}

@@ -1,5 +1,5 @@
 # Imagen de migraciones y seeds (se usa como job "migrate" en docker compose / despliegue).
-FROM python:3.12-slim
+FROM python:3.12.15-slim
 WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt

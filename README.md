@@ -14,7 +14,14 @@ consultora-tickets-frontend/
 
 ## Herramienta: Alembic
 
-SQL explícito (sin modelos ORM) en `alembic/versions/`. Versiones fijadas en `requirements.txt` (Alembic 1.14, SQLAlchemy 2.0, psycopg 3). Postgres 16.4.
+SQL explícito (sin modelos ORM) en `alembic/versions/`. Versiones fijadas en `requirements.txt` (Alembic 1.20, SQLAlchemy 2.1, psycopg 3.3). PostgreSQL 16.15 (imagen `postgres:16.15-bookworm`).
+
+| Migración | Contenido |
+|---|---|
+| 0001 | Esquema inicial: roles, permisos, usuarios, refresh tokens, clientes, categorías, tickets, comentarios, eventos; restricciones e índices |
+| 0002 | `user_permissions`: permisos propios por usuario (override por módulo) |
+| 0003 | `users.password_changed_at` (invalida tokens anteriores a un cambio de contraseña) e índice trigram del folio |
+| 0004 | Índice `(created_at DESC, id)` para el orden por defecto del listado |
 
 ## Uso local (Docker)
 
@@ -55,6 +62,17 @@ Con `psql/pg_dump` instalados y `DATABASE_URL` definida también sirven `scripts
 1. Construir la imagen (`docker build -t tickets-migrate .`) y ejecutarla como paso previo al backend, con `DATABASE_URL` apuntando a la BD gestionada: `docker run --rm -e DATABASE_URL=... tickets-migrate` (ejecuta `alembic upgrade head`).
 2. Una sola vez: `docker run --rm -e DATABASE_URL=... -e ADMIN_EMAIL=... -e ADMIN_PASSWORD=... tickets-migrate python seed/seed.py base`.
 3. No ejecutar `seed.py demo`. Orden: base de datos → migraciones → backend → frontend.
+
+## Actualizar PostgreSQL
+
+Las imágenes oficiales cambian de distribución base (y de versión de glibc) entre etiquetas: `postgres:16.15` usa Debian 13 (glibc 2.41), mientras que los volúmenes creados con `16.4` usan glibc 2.36. Mezclarlas desalinea la *collation*, invalida los índices de texto (por ejemplo, la unicidad del correo) y hace fallar `CREATE DATABASE`. Por eso se fija `-bookworm`. Para pasar a otra distribución base:
+
+```bash
+docker compose exec db psql -U tickets -d tickets -c "REINDEX DATABASE tickets" -c "ALTER DATABASE tickets REFRESH COLLATION VERSION"
+docker compose exec db psql -U tickets -d template1 -c "ALTER DATABASE template1 REFRESH COLLATION VERSION"
+```
+
+O bien `pg_dump` → volumen nuevo → `pg_restore`.
 
 ## Modelo de datos
 
