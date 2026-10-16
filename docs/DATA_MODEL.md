@@ -15,6 +15,7 @@ tickets 1──* ticket_events  (actor_id → users)
 |---|---|
 | `roles` | Dinámicos. Nombre único (insensible a mayúsculas). `is_active` para desactivar sin perder referencias. |
 | `role_permissions` | PK `(role_id, module)`. `module` ∈ tickets, users, roles, clients, dashboard. `level` 0 nada, 1 leer, 2 insertar, 3 editar, 4 eliminar (acumulativo). |
+| `user_permissions` | Overrides por usuario: PK `(user_id, module)`, `level` 0..4. El nivel efectivo de un módulo es el del usuario si existe fila; si no, el del rol. |
 | `users` | Email único insensible a mayúsculas, `password_hash` argon2id, un rol por usuario, `is_active`. Nunca se borran. |
 | `refresh_tokens` | Solo se guarda el SHA-256 del token opaco; `revoked_at` para logout/rotación. |
 | `clients` | Nombre único; se desactivan (no se borran). |
@@ -39,4 +40,4 @@ tickets 1──* ticket_events  (actor_id → users)
 
 ## "Administrador"
 
-No hay bandera especial: un administrador es un usuario activo con rol activo que tiene nivel 4 en **todos** los módulos. El seed base crea el rol "Administrador" y un usuario inicial (ADMIN_EMAIL / ADMIN_PASSWORD). El backend impide dejar el sistema sin ninguno.
+No hay bandera especial: un administrador es un usuario activo con rol activo cuyo nivel **efectivo** (override de usuario, o rol si no hay) es 4 en **todos** los módulos. El seed base crea el rol "Administrador" y un usuario inicial (ADMIN_EMAIL / ADMIN_PASSWORD). El backend impide dejar el sistema sin ninguno.
