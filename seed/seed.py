@@ -81,6 +81,16 @@ REASONS = {
 
 hasher = PasswordHasher()
 
+# Contraseñas publicadas en la documentación (.env.example). Sólo se aceptan en APP_ENV=local.
+EXAMPLE_PASSWORDS = {"Admin#Local1234", "Demo#Local1234"}
+
+
+def check_not_example(password: str, variable: str) -> None:
+    env = os.environ.get("APP_ENV", "local").lower()
+    if env != "local" and password in EXAMPLE_PASSWORDS:
+        sys.exit(f"{variable} es la contraseña de ejemplo publicada en la documentación; con APP_ENV={env} "
+                 "define una propia.")
+
 
 def connect() -> psycopg.Connection:
     url = os.environ.get("DATABASE_URL")
@@ -96,6 +106,7 @@ def seed_base(cur: psycopg.Cursor) -> None:
         sys.exit("Define ADMIN_EMAIL y ADMIN_PASSWORD para crear el administrador inicial.")
     if len(password) < 12:
         sys.exit("ADMIN_PASSWORD debe tener al menos 12 caracteres.")
+    check_not_example(password, "ADMIN_PASSWORD")
     name = os.environ.get("ADMIN_NAME") or "Administrador"
 
     for cid, code, cname in CATEGORIES:
@@ -136,6 +147,7 @@ def seed_demo(cur: psycopg.Cursor) -> None:
     password = os.environ.get("DEMO_PASSWORD")
     if not password or len(password) < 12:
         sys.exit("Define DEMO_PASSWORD (mínimo 12 caracteres).")
+    check_not_example(password, "DEMO_PASSWORD")
     cur.execute("SELECT count(*) FROM tickets")
     if cur.fetchone()[0] > 0:
         print("Ya existen tickets; el seed demo no se vuelve a aplicar.")
@@ -276,7 +288,7 @@ def seed_demo(cur: psycopg.Cursor) -> None:
                  rnd.choice(["Se contactó al cliente.", "Pendiente de validar con el equipo de infraestructura.",
                              "Se realizaron pruebas sin éxito, se escala.", "Confirmado el síntoma en producción."]), at),
             )
-    print("Datos de demostración cargados (SOLO uso local).")
+    print(f"Datos de demostración cargados (APP_ENV={os.environ.get('APP_ENV', 'local')}).")
 
 
 def main() -> None:
