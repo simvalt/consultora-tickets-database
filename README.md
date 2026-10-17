@@ -59,6 +59,8 @@ Con `psql/pg_dump` instalados y `DATABASE_URL` definida también sirven `scripts
 
 ## Despliegue
 
+Para servidor1: `Jenkinsfile` ejecuta el runner exclusivo de Tickets; valida las migraciones sobre una BD efimera y las pruebas de compatibilidad de la API antes de desplegar. La demo tiene su propio PostgreSQL y volumen, separados de los servicios actuales. Ver `consultora-tickets-backend/docs/SERVIDOR1_JENKINS.md`.
+
 1. Construir la imagen (`docker build -t tickets-migrate .`) y ejecutarla como paso previo al backend, con `DATABASE_URL` apuntando a la BD gestionada: `docker run --rm -e DATABASE_URL=... tickets-migrate` (ejecuta `alembic upgrade head`).
 2. Una sola vez: `docker run --rm -e DATABASE_URL=... -e ADMIN_EMAIL=... -e ADMIN_PASSWORD=... tickets-migrate python seed/seed.py base`.
 3. No ejecutar `seed.py demo`. Orden: base de datos → migraciones → backend → frontend.
